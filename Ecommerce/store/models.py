@@ -15,3 +15,22 @@ class Product(models.Model):
 
     def __str__(self):
         return self.product_name
+    
+
+class VariationCategory(models.Model):
+    name = models.CharField(max_length=50)  
+    description = models.TextField(blank=True, null=True)
+    def __str__(self):
+        return self.name
+    
+
+class Variation(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)  # ForeignKey to Product
+    category = models.ForeignKey(VariationCategory, on_delete=models.CASCADE)  # ForeignKey to VariationCategory
+    value = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+    created_date = models.DateTimeField(auto_now_add=True)  # Added this field
+    modified_date = models.DateTimeField(auto_now=True) 
+
+    def __str__(self):
+         return f"{self.product.product_name} - {self.category.name}: {self.value}"

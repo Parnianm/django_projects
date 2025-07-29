@@ -5,8 +5,8 @@ from carts.models import Cart, CartItem
 from category.models import Category
 from carts.views import _cart_id
 from django.db.models import Q 
-
-
+from collections import defaultdict
+from store.models import Variation
 def search(request):
     query = request.GET.get('q')
     products = []
@@ -66,6 +66,10 @@ def product_detail(request, category_slug, product_slug):
         slug=product_slug,
         category__slug=category_slug
     )
+    variations = Variation.objects.filter(product=product, is_active=True)
+    grouped_variations = defaultdict(list)
+    for var in variations:
+        grouped_variations[var.category.name].append(var)
 
     cart = Cart.objects.filter(cart_id=_cart_id(request)).first()
     product_in_cart = False
@@ -78,6 +82,7 @@ def product_detail(request, category_slug, product_slug):
     context = {
         'product': product,
         'product_in_cart': product_in_cart,
+        'grouped_variations': grouped_variations,
     }
 
     return render(request, 'store/product_detail.html', context)
