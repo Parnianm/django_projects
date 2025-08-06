@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import environ
+import os
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -139,3 +142,43 @@ from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
     messages.ERROR: "danger",
 }
+
+
+# ================== Environment Configuration ==================
+
+# Initialize the environment variables system
+env = environ.Env(
+    DEBUG=(bool, False)  # Set the default value of DEBUG to False
+)
+
+# Read the .env file located at the base directory
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
+# ================== Database Configuration =====================
+
+# Load the database configuration from DATABASE_URL in .env
+DATABASES = {
+    'default': env.db()
+}
+
+# ================== Security and Debugging ======================
+
+# Get the debug setting from .env
+DEBUG = env('DEBUG')
+
+# Get the secret key from .env
+SECRET_KEY = env('SECRET_KEY')
+
+# ================== Email (SMTP) Configuration ==================
+
+# Set the email backend to use SMTP
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# Use Gmail's SMTP server
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True  # Use TLS for secure connection
+
+# Load the email credentials from .env
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
