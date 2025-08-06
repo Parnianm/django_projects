@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .forms import RegisterForm, LoginForm
-from .models import Account
 # verfication Email 
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -19,8 +18,8 @@ User = get_user_model()
 def activate_account(request, uidb64, token):
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
-        user = Account._default_manager.get(pk=uid)
-    except(TypeError, ValueError, OverflowError, Account.DoesNotExist):
+        user = User.objects.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
 
     if user is not None and default_token_generator.check_token(user, token):
@@ -31,8 +30,7 @@ def activate_account(request, uidb64, token):
     else:
         messages.error(request, 'Activation link is invalid!')
         return redirect('accounts:register')
-
-
+        
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -81,8 +79,8 @@ def login_view(request):
                 # username=form.cleaned_data['username'],
                 password=form.cleaned_data['password']
             )
-            if user is not None:
-                if user.is_active == False:
+            if user:
+                if user.is_active:
                     login(request, user)
                     messages.success(request, "Login successful.")
                     return redirect('accounts:dashboard')
