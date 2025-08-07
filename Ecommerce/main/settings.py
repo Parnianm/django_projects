@@ -172,6 +172,7 @@ SECRET_KEY = env('SECRET_KEY')
 # ================== Email (SMTP) Configuration ==================
 
 # Set the email backend to use SMTP
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # Use Gmail's SMTP server

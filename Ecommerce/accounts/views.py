@@ -6,7 +6,7 @@ from .forms import RegisterForm, LoginForm
 # verfication Email 
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes
+from django.utils.encoding import force_bytes, force_str
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.contrib.auth.tokens import default_token_generator
@@ -31,6 +31,62 @@ def activate_account(request, uidb64, token):
         messages.error(request, 'Activation link is invalid!')
         return redirect('accounts:register')
         
+def reset_password_request(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user = None
+
+        if user:
+            current_site = get_current_site(request)
+            mail_subject = 'Reset your password'
+            message = render_to_string('accounts/emails/reset_password_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'token': default_token_generator.make_token(user),
+            })
+            to_email = email
+            email = EmailMessage(
+                subject=mail_subject, 
+                body=message,
+                from_email=None,
+                to=[to_email]
+            )
+            email.content_subtype = 'html'
+            email.send()
+            messages.success(request, 'Password reset link has been sent to your email.')
+            return redirect('accounts:login')
+        else:
+            messages.error(request, 'Account with this email does not exist.')
+
+    return render(request, 'accounts/reset_password_request.html')
+
+
+def reset_password_confirm(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            password = request.POST.get('password')
+            confirm_password = request.POST.get('confirm_password')
+            if password == confirm_password:
+                user.set_password(password)
+                user.save()
+                messages.success(request, 'Your password has been reset successfully.')
+                return redirect('accounts:login')
+            else:
+                messages.error(request, 'Passwords do not match.')
+        return render(request, 'accounts/reset_password_confirm.html')
+    else:
+        messages.error(request, 'The reset link is invalid or has expired.')
+        return redirect('accounts:reset_password')        
 
 def register_view(request):
     if request.user.is_authenticated:
