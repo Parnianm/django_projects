@@ -12,6 +12,8 @@ from django.template.loader import render_to_string
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from carts.models import Cart, CartItem
+from carts.views import _cart_id
 
 User = get_user_model()
 
@@ -137,6 +139,18 @@ def login_view(request):
             )
             if user:
                 if user.is_active:
+                    try:
+                        cart = Cart.objects.get(cart_id = _cart_id(request))
+                        is_cart_item_exits = CartItem.objects.filter(cart = cart).exists()
+                        if is_cart_item_exits:
+                            cart_item = CartItem.objects.filter(cart=cart)
+
+                            for item in cart_item:
+                                item.user = user
+                                item.save()
+                    except:
+                        pass
+                    
                     login(request, user)
                     messages.success(request, "Login successful.")
                     return redirect('accounts:dashboard')
