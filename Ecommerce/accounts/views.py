@@ -14,6 +14,8 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from carts.models import Cart, CartItem
 from carts.views import _cart_id
+import requests
+from urllib.parse import urlparse, parse_qs
 
 User = get_user_model()
 
@@ -153,6 +155,17 @@ def login_view(request):
                     
                     login(request, user)
                     messages.success(request, "Login successful.")
+                    url = request.META.get('HTTP_REFERER')
+                    if url:
+                        try:
+                            query = urlparse(url).query
+                            params = parse_qs(query)
+                            next_page = params.get('next', [None])[0]
+                            if next_page:
+                                return redirect(next_page)
+                        except Exception:
+                            pass
+
                     return redirect('accounts:dashboard')
                 else:
                     messages.warning(request, "Account is not activated. Please check your email.")
