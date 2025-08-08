@@ -187,7 +187,7 @@ def checkout(request, total=0, quantity=0, cart_items=None):
     try:
         tax = 0 
         grand_total = 0
-        cart = _get_or_create_cart(request)
+        # cart = _get_or_create_cart(request)
         if request.user.is_authenticated:
             cart_items = CartItem.objects.filter(user=request.user, is_active=True)
         else:
